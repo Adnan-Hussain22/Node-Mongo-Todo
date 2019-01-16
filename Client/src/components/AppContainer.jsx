@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import Modal from "react-responsive-modal";
+import { server } from "../Helper";
 import swal from "sweetalert";
 import "../App.css";
 class AppContainer extends Component {
@@ -17,61 +18,112 @@ class AppContainer extends Component {
     };
   }
 
-  handleAddTask = e => {
+  async componentDidMount() {
+    try {
+      const res = await server.fetchAllTask();
+      if (res.status) {
+        this.setState({
+          todos: this.state.todos.concat([...res.data])
+        });
+      }
+    } catch (err) {}
+  }
+
+  handleAddTask = async e => {
     e.preventDefault();
     const todoObject = {
       title: this.state.title,
       description: this.state.description,
       doneStatus: this.state.doneStatus
     };
-
-    this.setState({
-      todos: this.state.todos.concat(todoObject),
-      title: "",
-      description: "",
-      doneStatus: false
-    });
+    try {
+      const res = await server.addTask(todoObject);
+      if (res.status) {
+        this.setState({
+          todos: this.state.todos.concat({ ...todoObject, id: res._id }),
+          title: "",
+          description: "",
+          doneStatus: false
+        });
+        return;
+      }
+      console.log("Unable to add todo");
+    } catch (err) {
+      console.log(err);
+    }
   };
 
-  handleDeleteRequest = todoId => {
-    this.setState({
-      todos: this.state.todos.filter((item, index) => index !== todoId)
-    });
-    swal("Wohaaa!", "Your task has been deleted", "success");
+  handleDeleteRequest = async todoId => {
+    try {
+      const res = await server.deleteTask(todoId);
+      if (res.status) {
+        this.setState({
+          todos: [...res.data],
+          title: "",
+          description: "",
+          doneStatus: false
+        });
+        // swal("Wohaaa!", "Your task has been deleted", "success");
+        return;
+      }
+      console.log("Unable to delete todo");
+    } catch (err) {
+      console.log(err);
+    }
   };
 
-  handleUpdateRequest = e => {
+  handleUpdateRequest = async e => {
     e.preventDefault();
-    const id = localStorage.getItem("updatedTodoId");
-    const todoObject = {
-      title: this.state.updateTitle,
-      description: this.state.updateDescription
-    };
-    const todos = this.state.todos.filter((item, index) => {
-      if (index === Number(id)) {
-        item.title = todoObject.title;
-        item.description = todoObject.description;
+    try {
+      const id = localStorage.getItem("updatedTodoId");
+      const todoObject = {
+        title: this.state.updateTitle,
+        description: this.state.updateDescription
+      };
+      const res = await server.updateTask(id, todoObject);
+      if (res.status) {
+        console.log("handleUpdateRequest==>", res);
+        const todos = this.state.todos.filter(o => o._id != id);
+        console.log("todos==>", todos);
+        this.setState({
+          todos: todos.concat({ ...res.data }),
+          title: "",
+          description: ""
+        });
+        this.onCloseModal();
+        swal("Wohaaa!", "Your task has been updated", "success");
+        return;
       }
-      return item;
-    });
-
-    this.setState({
-      todos
-    });
-    this.onCloseModal();
-    swal("Wohaaa!", "Your task has been updated", "success");
+      console.log("Unable to update todo");
+    } catch (err) {
+      console.log(err);
+    }
   };
-  handleTaskdone = id => {
-    const newTodoList = this.state.todos.filter((todo, index) => {
-      if (index === id) {
-        todo.doneStatus = !todo.doneStatus;
-      }
-      return todo;
-    });
-    this.setState({
-      todos: newTodoList
-    });
-    swal("Wohamiii!", "Your task status is updated!", "success");
+  handleTaskdone = async todo => {
+    try {
+      const res = await server.updateTaskStatus(todo._id, !todo.status);
+      if (res.status) {
+        const newTodoList = this.state.todos.filter(o => o._id != todo._id);
+        this.setState({
+          todos: [res.data, ...newTodoList]
+        });
+        if(res.data.status)
+        swal("Wohamiii!", "Your task done!", "success");
+      } else swal("Oops!", "Unable to update the task!", "error");
+    } catch (err) {
+      console.log(err);
+    }
+    // console.log(this.state.todos[id]);
+    // const newTodoList = this.state.todos.filter((todo, index) => {
+    //   if (todo._id === id) {
+    //     todo.status = !todo.status;
+    //   }
+    //   return todo;
+    // });
+    // this.setState({
+    //   todos: newTodoList
+    // });
+    // swal("Wohamiii!", "Your task status is updated!", "success");
   };
 
   onOpenModal = id => {
@@ -133,7 +185,8 @@ class AppContainer extends Component {
             <div className="col-md-10 col-lg-10 col-sm-12">
               {this.state.todos ? (
                 this.state.todos.map((todo, index) => {
-                  if (!todo.doneStatus) {
+                  console.log("todo==>", todo);
+                  if (!todo.status) {
                     return (
                       <div className="card my-5" key={index}>
                         <div className="card-body">
@@ -141,21 +194,21 @@ class AppContainer extends Component {
                           <p className="todotext">{todo.description}</p>
                           <div className="btn-group float-right">
                             <button
-                              onClick={() => this.handleTaskdone(index)}
+                              onClick={() => this.handleTaskdone(todo)}
                               className="btn btn-outline-success btn-lg card_btns"
                             >
                               {" "}
                               <i className="fa fa-check" />{" "}
                             </button>
                             <button
-                              onClick={() => this.onOpenModal(index)}
+                              onClick={() => this.onOpenModal(todo._id)}
                               className="btn btn-outline-warning btn-lg card_btns"
                             >
                               {" "}
                               <i className="fas fa-pencil-alt" />{" "}
                             </button>
                             <button
-                              onClick={() => this.handleDeleteRequest(index)}
+                              onClick={() => this.handleDeleteRequest(todo._id)}
                               className="btn btn-outline-danger btn-lg card_btns"
                             >
                               {" "}
@@ -173,7 +226,7 @@ class AppContainer extends Component {
                           <p className="todotext crossed">{todo.description}</p>
                           <div className="btn-group float-right">
                             <button
-                              onClick={() => this.handleTaskdone(index)}
+                              onClick={() => this.handleTaskdone(todo)}
                               className="btn btn-outline-warning btn-lg card_btns"
                             >
                               {" "}
@@ -181,7 +234,7 @@ class AppContainer extends Component {
                             </button>
 
                             <button
-                              onClick={() => this.handleDeleteRequest(index)}
+                              onClick={() => this.handleDeleteRequest(todo._id)}
                               className="btn btn-outline-danger btn-lg card_btns"
                             >
                               {" "}

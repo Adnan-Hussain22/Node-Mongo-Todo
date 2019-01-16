@@ -53,9 +53,9 @@ api.post("/", (req, res) => {
 
 api.put("/:id", (req, res) => {
   const { id } = req.params;
-  const { title, status, description } = req.body;
+  const { title, description } = req.body;
   schema
-    .updateOne({ _id: id }, { $set: { title, status, description } })
+    .updateOne({ _id: id }, { $set: { title, description } })
     .then(e => schema.findOne({ _id: id }))
     .then(data => {
       res.status(200).send({ status: true, message: "", data });
@@ -64,6 +64,36 @@ api.put("/:id", (req, res) => {
       res
         .status(500)
         .send({ status: false, data, message: "internal server error" });
+    });
+});
+
+api.put("/status/:id/:status", (req, res) => {
+  const { id, status } = req.params;
+  console.log("updating status to " + status + " for==>", id);
+  schema
+    .updateOne({ _id: id }, { $set: { status } })
+    .then(e => schema.findOne({ _id: id }))
+    .then(data => {
+      res.status(200).send({ status: true, message: "", data });
+    })
+    .catch(err => {
+      res
+        .status(500)
+        .send({ status: false, data: null, message: "internal server error" });
+    });
+});
+
+api.delete("/:id", (req, res) => {
+  const { id } = req.params;
+  schema
+    .deleteOne({ _id: id })
+    .then(res => {
+      return schema.find();
+    })
+    .then(data => {
+      res
+        .status(200)
+        .send({ status: true, data, message: "todo deleted successfully" });
     });
 });
 
