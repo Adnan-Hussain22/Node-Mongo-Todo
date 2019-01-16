@@ -1,0 +1,17 @@
+{
+  "name": "node-server",
+  "version": "1.0.0",
+  "description": "todo server with node and mongodb",
+  "main": "index.js",
+  "author": "Adnan Hussain",
+  "license": "MIT",
+  "scripts": {
+    "start": "nodemon index.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4",
+    "mongoose": "^5.4.4",
+    "nodemon": "^1.18.9"
+  }
+}
