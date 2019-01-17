@@ -33,14 +33,13 @@ class AppContainer extends Component {
     e.preventDefault();
     const todoObject = {
       title: this.state.title,
-      description: this.state.description,
-      doneStatus: this.state.doneStatus
+      description: this.state.description
     };
     try {
       const res = await server.addTask(todoObject);
       if (res.status) {
         this.setState({
-          todos: this.state.todos.concat({ ...todoObject, id: res._id }),
+          todos: this.state.todos.concat({ ...res.data }),
           title: "",
           description: "",
           doneStatus: false
@@ -56,6 +55,7 @@ class AppContainer extends Component {
   handleDeleteRequest = async todoId => {
     try {
       const res = await server.deleteTask(todoId);
+      console.log(res);
       if (res.status) {
         this.setState({
           todos: [...res.data],
@@ -63,7 +63,7 @@ class AppContainer extends Component {
           description: "",
           doneStatus: false
         });
-        // swal("Wohaaa!", "Your task has been deleted", "success");
+        swal("Wohaaa!", "Your task has been deleted", "success");
         return;
       }
       console.log("Unable to delete todo");
@@ -107,23 +107,11 @@ class AppContainer extends Component {
         this.setState({
           todos: [res.data, ...newTodoList]
         });
-        if(res.data.status)
-        swal("Wohamiii!", "Your task done!", "success");
+        if (res.data.status) swal("Wohamiii!", "Your task done!", "success");
       } else swal("Oops!", "Unable to update the task!", "error");
     } catch (err) {
       console.log(err);
     }
-    // console.log(this.state.todos[id]);
-    // const newTodoList = this.state.todos.filter((todo, index) => {
-    //   if (todo._id === id) {
-    //     todo.status = !todo.status;
-    //   }
-    //   return todo;
-    // });
-    // this.setState({
-    //   todos: newTodoList
-    // });
-    // swal("Wohamiii!", "Your task status is updated!", "success");
   };
 
   onOpenModal = id => {
@@ -183,72 +171,69 @@ class AppContainer extends Component {
         <div className="container">
           <div className="row justify-content-center">
             <div className="col-md-10 col-lg-10 col-sm-12">
-              {this.state.todos ? (
-                this.state.todos.map((todo, index) => {
-                  console.log("todo==>", todo);
-                  if (!todo.status) {
-                    return (
-                      <div className="card my-5" key={index}>
-                        <div className="card-body">
-                          <h3 className="todotext">{todo.title}</h3>
-                          <p className="todotext">{todo.description}</p>
-                          <div className="btn-group float-right">
-                            <button
-                              onClick={() => this.handleTaskdone(todo)}
-                              className="btn btn-outline-success btn-lg card_btns"
-                            >
-                              {" "}
-                              <i className="fa fa-check" />{" "}
-                            </button>
-                            <button
-                              onClick={() => this.onOpenModal(todo._id)}
-                              className="btn btn-outline-warning btn-lg card_btns"
-                            >
-                              {" "}
-                              <i className="fas fa-pencil-alt" />{" "}
-                            </button>
-                            <button
-                              onClick={() => this.handleDeleteRequest(todo._id)}
-                              className="btn btn-outline-danger btn-lg card_btns"
-                            >
-                              {" "}
-                              <i className="fa fa-trash" />{" "}
-                            </button>
-                          </div>
+              {this.state.todos.map((todo, index) => {
+                console.log("todo==>", todo);
+                if (!todo.status) {
+                  return (
+                    <div className="card my-5" key={index}>
+                      <div className="card-body">
+                        <h3 className="todotext">{todo.title}</h3>
+                        <p className="todotext">{todo.description}</p>
+                        <div className="btn-group float-right">
+                          <button
+                            onClick={() => this.handleTaskdone(todo)}
+                            className="btn btn-outline-success btn-lg card_btns"
+                          >
+                            {" "}
+                            <i className="fa fa-check" />{" "}
+                          </button>
+                          <button
+                            onClick={() => this.onOpenModal(todo._id)}
+                            className="btn btn-outline-warning btn-lg card_btns"
+                          >
+                            {" "}
+                            <i className="fas fa-pencil-alt" />{" "}
+                          </button>
+                          {}
+                          <button
+                            onClick={() => this.handleDeleteRequest(todo._id)}
+                            className="btn btn-outline-danger btn-lg card_btns"
+                          >
+                            {" "}
+                            <i className="fa fa-trash" />{" "}
+                          </button>
                         </div>
                       </div>
-                    );
-                  } else {
-                    return (
-                      <div className="card my-5 doneBody" key={index}>
-                        <div className="card-body">
-                          <h3 className="todotext crossed">{todo.title}</h3>
-                          <p className="todotext crossed">{todo.description}</p>
-                          <div className="btn-group float-right">
-                            <button
-                              onClick={() => this.handleTaskdone(todo)}
-                              className="btn btn-outline-warning btn-lg card_btns"
-                            >
-                              {" "}
-                              <i className="fas fa-undo" />{" "}
-                            </button>
+                    </div>
+                  );
+                } else {
+                  return (
+                    <div className="card my-5 doneBody" key={index}>
+                      <div className="card-body">
+                        <h3 className="todotext crossed">{todo.title}</h3>
+                        <p className="todotext crossed">{todo.description}</p>
+                        <div className="btn-group float-right">
+                          <button
+                            onClick={() => this.handleTaskdone(todo)}
+                            className="btn btn-outline-warning btn-lg card_btns"
+                          >
+                            {" "}
+                            <i className="fas fa-undo" />{" "}
+                          </button>
 
-                            <button
-                              onClick={() => this.handleDeleteRequest(todo._id)}
-                              className="btn btn-outline-danger btn-lg card_btns"
-                            >
-                              {" "}
-                              <i className="fa fa-trash" />{" "}
-                            </button>
-                          </div>
+                          <button
+                            onClick={() => this.handleDeleteRequest(todo._id)}
+                            className="btn btn-outline-danger btn-lg card_btns"
+                          >
+                            {" "}
+                            <i className="fa fa-trash" />{" "}
+                          </button>
                         </div>
                       </div>
-                    );
-                  }
-                })
-              ) : (
-                <p>No items</p>
-              )}
+                    </div>
+                  );
+                }
+              })}
             </div>
           </div>
         </div>

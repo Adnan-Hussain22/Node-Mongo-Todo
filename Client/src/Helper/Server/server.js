@@ -69,13 +69,13 @@ const updateTaskStatus = async (id, status) => {
 };
 
 const deleteTask = async id => {
+  console.log('deleteTask')
   try {
     if (!id && typeof id != "string") {
       return { status: false, message: "id must be string" };
     }
     const res = await fetch(`${apiEndpoint}/${id}`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" }
+      method: "DELETE"
     });
     const json = await res.json();
     return json;

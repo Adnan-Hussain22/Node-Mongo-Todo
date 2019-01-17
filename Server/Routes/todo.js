@@ -85,6 +85,7 @@ api.put("/status/:id/:status", (req, res) => {
 
 api.delete("/:id", (req, res) => {
   const { id } = req.params;
+  console.log('id==>',id)
   schema
     .deleteOne({ _id: id })
     .then(res => {
@@ -94,6 +95,13 @@ api.delete("/:id", (req, res) => {
       res
         .status(200)
         .send({ status: true, data, message: "todo deleted successfully" });
+    })
+    .catch(err => {
+      res.status(500).send({
+        status: false,
+        data: null,
+        message: "unable to delete todo"
+      });
     });
 });
 
